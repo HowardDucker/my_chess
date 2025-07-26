@@ -6,7 +6,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/Mohammed785/chess/game"
+	"github.com/HowardDucker/my_chess/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
 )
@@ -47,11 +47,11 @@ func (g *Game) IsValid(move [2]int) bool {
 	return false
 }
 
-func (g *Game) RestartGame(){
+func (g *Game) RestartGame() {
 	g.board = game.NewBoard()
 	g.currentPlayer = "white"
 	g.gameMode = modeGame
-	g.winner=""
+	g.winner = ""
 	g.validMoves = nil
 }
 
@@ -71,31 +71,31 @@ func (g *Game) Update() error {
 
 			if g.validMoves != nil && g.IsValid(pos) {
 				p := g.board.GetPiece(g.selectedPos)
-				if p.Notation==' '&&piece==nil&&x!=p.Pos()[0]{
+				if p.Notation == ' ' && piece == nil && x != p.Pos()[0] {
 					piece = g.board.GetPiece(g.board.PawnDoubleMove.Pos)
 				}
 				moveType := p.Move(pos, piece, true)
 				tempPlayer := g.currentPlayer
 				tempPos := g.selectedPos
 				g.ChangePlayer()
-				if p.Notation==' '&&math.Abs(float64(pos[1]-tempPos[1]))==2{
+				if p.Notation == ' ' && math.Abs(float64(pos[1]-tempPos[1])) == 2 {
 					g.board.PawnDoubleMove = game.PawnDoubleMove{
 						Player: g.currentPlayer,
-						Pos: pos,
+						Pos:    pos,
 					}
-				}else{
-					g.board.PawnDoubleMove.Player=""
+				} else {
+					g.board.PawnDoubleMove.Player = ""
 
 				}
-				cantMove:=g.board.IsCheckmated(g.currentPlayer)
+				cantMove := g.board.IsCheckmated(g.currentPlayer)
 				if g.board.IsChecked(g.currentPlayer) {
 					g.playSound("check")
-					if cantMove{
+					if cantMove {
 						g.winner = tempPlayer
 						g.gameMode = modeGameOver
 					}
 				} else {
-					if cantMove{
+					if cantMove {
 						g.winner = "draw"
 						g.gameMode = modeGameOver
 					}
@@ -117,9 +117,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.board.HighlightSquares(screen, g.validMoves)
 
 	if g.gameMode == modeGameOver {
-		if g.winner=="draw"{
+		if g.winner == "draw" {
 			text.Draw(screen, "Game ended in a Draw", game.FiraBig, 150, 300, color.Black)
-		}else{
+		} else {
 			text.Draw(screen, fmt.Sprintf("%s Won!!", g.winner), game.FiraBig, 280, 300, color.Black)
 		}
 		text.Draw(screen, "Press 'Enter' to start a new game", game.FiraNormal, 150, 400, color.Black)
@@ -144,7 +144,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func NewGame() *Game {
-	return &Game{board: game.NewBoard(),audio: game.NewAudio(), currentPlayer: "white", winner: "", gameMode: modeGame}
+	return &Game{board: game.NewBoard(), audio: game.NewAudio(), currentPlayer: "white", winner: "", gameMode: modeGame}
 }
 
 func main() {
