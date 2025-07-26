@@ -3,7 +3,7 @@ package game
 import (
 	"log"
 
-	"github.com/Mohammed785/chess/resources"
+	"github.com/HowardDucker/my_chess/resources"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 )
 
@@ -36,44 +36,42 @@ func newPlayer(ctx *audio.Context, audio string) *audio.Player {
 	return p
 }
 
-func (a Audio) PlayMoveAudio()error {
-	if err:=a.movePlayer.Rewind();err!=nil{
+func (a Audio) PlayMoveAudio() error {
+	if err := a.movePlayer.Rewind(); err != nil {
 		return err
 	}
 	a.movePlayer.Play()
 	return nil
 }
 
-func (a Audio) PlayCaptureAudio()error {
-	if err:=a.capturePlayer.Rewind();err!=nil{
+func (a Audio) PlayCaptureAudio() error {
+	if err := a.capturePlayer.Rewind(); err != nil {
 		return err
 	}
 	a.capturePlayer.Play()
 	return nil
 }
 
-func (a Audio) PlayCastleAudio()error {
-	if err:=a.castlePlayer.Rewind();err!=nil{
+func (a Audio) PlayCastleAudio() error {
+	if err := a.castlePlayer.Rewind(); err != nil {
 		return err
 	}
 	a.castlePlayer.Play()
 	return nil
 }
 
-func (a Audio) PlayPromoteAudio()error {
-	if err:=a.promotePlayer.Rewind();err!=nil{
+func (a Audio) PlayPromoteAudio() error {
+	if err := a.promotePlayer.Rewind(); err != nil {
 		return err
 	}
 	a.promotePlayer.Play()
 	return nil
 }
 
-func (a Audio) PlayCheckAudio()error {
-	if err:=a.checkPlayer.Rewind();err!=nil{
+func (a Audio) PlayCheckAudio() error {
+	if err := a.checkPlayer.Rewind(); err != nil {
 		return err
 	}
 	a.checkPlayer.Play()
 	return nil
 }
-
-

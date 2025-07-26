@@ -9,6 +9,7 @@ import (
 	"github.com/HowardDucker/my_chess/game"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text"
+	"github.com/int8/gomcts"
 )
 
 type Mode int
@@ -19,6 +20,8 @@ const (
 )
 
 type Game struct {
+	Mode          GameMode
+	Menu          Menu
 	board         *game.Board
 	audio         game.Audio
 	currentPlayer string
@@ -26,6 +29,22 @@ type Game struct {
 	selectedPos   [2]int
 	gameMode      Mode
 	winner        string
+}
+
+// Stub methods: fill with your actual game logic
+func (g *Game) StartNewGame() {
+	log.Println("Initializing new game...")
+	// TODO: Reset your game state for a fresh game
+}
+
+func (g *Game) StartComputerGame() {
+	log.Println("Starting game vs computer...")
+	// TODO: Setup game for AI opponent (MCTS AI can be added later here)
+}
+
+func (g *Game) StartHumanGame() {
+	log.Println("Starting game for two humans...")
+	// TODO: Setup two-player mode
 }
 
 func (g *Game) ChangePlayer() {
@@ -48,6 +67,10 @@ func (g *Game) IsValid(move [2]int) bool {
 }
 
 func (g *Game) RestartGame() {
+	g.ResetGameState()
+}
+
+func (g *Game) ResetGameState() {
 	g.board = game.NewBoard()
 	g.currentPlayer = "white"
 	g.gameMode = modeGame
@@ -56,55 +79,65 @@ func (g *Game) RestartGame() {
 }
 
 func (g *Game) Update() error {
-	switch g.gameMode {
-	case modeGameOver:
-		if ebiten.IsKeyPressed(ebiten.KeyEnter) {
-			g.RestartGame()
+	switch g.Mode {
+	case ModeMenu:
+		return g.Menu.Update(g)
+	case ModePlaying:
+		if ebiten.IsKeyPressed(ebiten.KeyEscape) {
+			g.Mode = ModeMenu
+			g.ResetGameState()
+			return nil
 		}
-	case modeGame:
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-			x, y := ebiten.CursorPosition()
-			x /= int(game.SQUARE_SIZE)
-			y /= int(game.SQUARE_SIZE)
-			pos := [2]int{x, y}
-			piece := g.board.GetPiece([2]int{x, y})
+		switch g.gameMode {
+		case modeGameOver:
+			if ebiten.IsKeyPressed(ebiten.KeyEnter) {
+				g.RestartGame()
+			}
+		case modeGame:
+			if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+				x, y := ebiten.CursorPosition()
+				x /= int(game.SQUARE_SIZE)
+				y /= int(game.SQUARE_SIZE)
+				pos := [2]int{x, y}
+				piece := g.board.GetPiece([2]int{x, y})
 
-			if g.validMoves != nil && g.IsValid(pos) {
-				p := g.board.GetPiece(g.selectedPos)
-				if p.Notation == ' ' && piece == nil && x != p.Pos()[0] {
-					piece = g.board.GetPiece(g.board.PawnDoubleMove.Pos)
-				}
-				moveType := p.Move(pos, piece, true)
-				tempPlayer := g.currentPlayer
-				tempPos := g.selectedPos
-				g.ChangePlayer()
-				if p.Notation == ' ' && math.Abs(float64(pos[1]-tempPos[1])) == 2 {
-					g.board.PawnDoubleMove = game.PawnDoubleMove{
-						Player: g.currentPlayer,
-						Pos:    pos,
+				if g.validMoves != nil && g.IsValid(pos) {
+					p := g.board.GetPiece(g.selectedPos)
+					if p.Notation == ' ' && piece == nil && x != p.Pos()[0] {
+						piece = g.board.GetPiece(g.board.PawnDoubleMove.Pos)
 					}
-				} else {
-					g.board.PawnDoubleMove.Player = ""
+					moveType := p.Move(pos, piece, true)
+					tempPlayer := g.currentPlayer
+					tempPos := g.selectedPos
+					g.ChangePlayer()
+					if p.Notation == ' ' && math.Abs(float64(pos[1]-tempPos[1])) == 2 {
+						g.board.PawnDoubleMove = game.PawnDoubleMove{
+							Player: g.currentPlayer,
+							Pos:    pos,
+						}
+					} else {
+						g.board.PawnDoubleMove.Player = ""
 
-				}
-				cantMove := g.board.IsCheckmated(g.currentPlayer)
-				if g.board.IsChecked(g.currentPlayer) {
-					g.playSound("check")
-					if cantMove {
-						g.winner = tempPlayer
-						g.gameMode = modeGameOver
 					}
-				} else {
-					if cantMove {
-						g.winner = "draw"
-						g.gameMode = modeGameOver
+					cantMove := g.board.IsCheckmated(g.currentPlayer)
+					if g.board.IsChecked(g.currentPlayer) {
+						g.playSound("check")
+						if cantMove {
+							g.winner = tempPlayer
+							g.gameMode = modeGameOver
+						}
+					} else {
+						if cantMove {
+							g.winner = "draw"
+							g.gameMode = modeGameOver
+						}
+						g.playSound(moveType)
 					}
-					g.playSound(moveType)
+				} else if piece != nil && piece.Color == g.currentPlayer {
+					allMoves := piece.GetAllMoves(g.board)
+					g.validMoves = g.board.ValidateMoves(g.currentPlayer, piece, allMoves)
+					g.selectedPos = pos
 				}
-			} else if piece != nil && piece.Color == g.currentPlayer {
-				allMoves := piece.GetAllMoves(g.board)
-				g.validMoves = g.board.ValidateMoves(g.currentPlayer, piece, allMoves)
-				g.selectedPos = pos
 			}
 		}
 	}
@@ -112,17 +145,22 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.board.DrawSquares(screen)
-	g.board.DrawPieces(screen)
-	g.board.HighlightSquares(screen, g.validMoves)
+	switch g.Mode {
+	case ModeMenu:
+		g.Menu.Draw(screen)
+	case ModePlaying:
+		g.board.DrawSquares(screen)
+		g.board.DrawPieces(screen)
+		g.board.HighlightSquares(screen, g.validMoves)
 
-	if g.gameMode == modeGameOver {
-		if g.winner == "draw" {
-			text.Draw(screen, "Game ended in a Draw", game.FiraBig, 150, 300, color.Black)
-		} else {
-			text.Draw(screen, fmt.Sprintf("%s Won!!", g.winner), game.FiraBig, 280, 300, color.Black)
+		if g.gameMode == modeGameOver {
+			if g.winner == "draw" {
+				text.Draw(screen, "Game ended in a Draw", game.FiraBig, 150, 300, color.Black)
+			} else {
+				text.Draw(screen, fmt.Sprintf("%s Won!!", g.winner), game.FiraBig, 280, 300, color.Black)
+			}
+			text.Draw(screen, "Press 'Enter' to start a new game", game.FiraNormal, 150, 400, color.Black)
 		}
-		text.Draw(screen, "Press 'Enter' to start a new game", game.FiraNormal, 150, 400, color.Black)
 	}
 }
 func (g *Game) playSound(sound string) {
@@ -154,4 +192,9 @@ func main() {
 
 		log.Fatal(err)
 	}
+	SomeFunc()
+}
+
+func SomeFunc() {
+	println(gomcts.DefaultRolloutPolicy)
 }

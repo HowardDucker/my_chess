@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/Mohammed785/chess/resources"
+	"github.com/HowardDucker/my_chess/resources"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -116,7 +116,7 @@ func (p *Piece) Move(newPos [2]int, other *Piece, confirm bool) string {
 	}
 	moveType := "move"
 	p.oldPos = p.pos
-	p.pos = newPos 
+	p.pos = newPos
 	if other != nil {
 		other.captured = true
 		other.oldPos = other.pos

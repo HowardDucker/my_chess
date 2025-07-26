@@ -3,7 +3,7 @@ package game
 import (
 	"log"
 
-	"github.com/Mohammed785/chess/resources"
+	"github.com/HowardDucker/my_chess/resources"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
